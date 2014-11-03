@@ -21,11 +21,20 @@ public class filter {
 	
 	public static void main(String[] args) throws IOException
 	{
-//		long t1 = System.currentTimeMillis();
+//		long t1 = System.currentTimeMillis();abstract   continue   for          new         switch
+//    assert     default    if           package     synchronized
+//    boolean    do         goto         private     this
+//    break      double     implements   protected   throw
+//    byte       else       import       public      throws
+//    case       enum       instanceof   return      transient
+//    catch      extends    int          short       try
+//    char       final      interface    static      void
+//    class      finally    long         strictfp    volatile
+//    const      float      native       super       while
 
 		
 		
-		String fileName=args[0],finalType;
+		String fileName=args[0],finalType;//A variable can be declared final. A final variable may only be assigned to once. Declaring a variable final can serve as useful documentation that its value will not change and can help avoid programming errors. 
 		Hashtable trainWords, testWords;//
 
 //		trainWords=extractWordFromDir(path);
