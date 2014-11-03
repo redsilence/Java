@@ -1,0 +1,416 @@
+import java.io.BufferedReader; //io a package; Class BufferedReader, Reads text from a character-input stream, buffering characters so as to provide for the efficient reading of characters, arrays, and lines.
+import java.io.BufferedWriter;//BufferedWriter(Writer out) Creates a buffered character-output stream that uses a default-sized output buffer. BufferedWriter(Writer out, int sz) Creates a new buffered character-output stream that uses an output buffer of the given size.
+import java.io.File;//An abstract representation of file and directory pathnames.
+import java.io.FileReader;//
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Set;
+
+
+public class filter {
+
+	
+	static int numSpamWords = 0;  //all distinct words of class spam 
+	static int numHamWords = 0;   //all distinct words of class ham
+	//static String finalClass;    //final class of test file
+	static int numHamFile = 0;   //the number of ham files;
+	static int numSpamFile = 0;   //the number of spam files
+	
+	public static void main(String[] args) throws IOException
+	{
+//		long t1 = System.currentTimeMillis();
+
+		
+		
+		String fileName=args[0],finalType;
+		Hashtable trainWords, testWords;
+
+//		trainWords=extractWordFromDir(path);
+		
+		trainWords=extractWordFromGeneratedFile("knowledge.txt");
+		numHamFile=3177;
+		numSpamFile=770;
+		numHamWords=1656018;
+		numSpamWords=542307;
+//		Word trainWord=new Word();
+//		Set s=trainWords.keySet();
+//		for(Iterator i=s.iterator();i.hasNext();)
+//		{
+//			trainWord=(Word)trainWords.get(i.next());
+//			numHamWords+=trainWord.numInHam;
+//			numSpamWords+=trainWord.numInSpam;
+//		}
+		
+		
+//		writeTrainWords(trainWords);
+		
+		
+		testWords=extractWordFromFile(fileName);
+		finalType=bayesian(trainWords, testWords);
+		System.out.println(finalType);
+
+		
+//		String path2="train";
+//		File d=new File(path2);
+//		File list[]=d.listFiles();
+//		String fileName,wordType="",classifiedType="";
+//		String finalClass;
+//		int n=0;
+//		int right=0,totNum=0;
+//		for(int i=0;i<list.length;i++)
+//		{
+//			//read trainfile//////////////////////////////////////
+//			n++;
+//			trainWords=extractWordFromGeneratedFile("trainWords.txt");
+//			numHamFile=3177;
+//			numSpamFile=770;
+//			numHamWords=1656018;
+//			numSpamWords=542307;
+//			Word trainWord=new Word();
+//			Set s=trainWords.keySet();
+//			for(Iterator j=s.iterator();j.hasNext();)
+//			{
+//				trainWord=(Word)trainWords.get(j.next());
+//				numHamWords+=trainWord.numInHam;
+//				numSpamWords+=trainWord.numInSpam;
+//			}
+//			
+//			//////////////////////////////////////////////////////
+//			if(list[i].isFile())
+//			{
+//				totNum++;
+//				
+//				fileName=list[i].getName();
+//				wordType=fileName.substring(0, 3);   //the word's type
+//			
+//				fileName=path2+"/"+fileName;
+//				
+//				testWords=extractWordFromFile(fileName);
+//				//type of this word
+//				finalClass=bayesian(trainWords, testWords);
+//				System.out.println(finalClass+" "+n);
+//				classifiedType=finalClass.substring(0,3);
+//				
+//				if(classifiedType.equals(wordType))
+//					right++;
+//			
+//			}	
+//		}
+//		double acc = (double)right/totNum;
+//		System.out.println(acc);
+		
+		
+		
+
+		
+		
+//		long t2 = System.currentTimeMillis();
+//		double t3 = (double)(t2-t1)/1000;
+//		System.out.println("run time is: "+t3+" sec");
+	}
+	
+	
+	
+	
+	public static void writeTrainWords(Hashtable trainWords)
+	{
+		
+	try{
+		
+		BufferedWriter bw = new BufferedWriter(new FileWriter("trainWords.txt",true));
+
+		Word trainWord;
+		Set s=trainWords.keySet();
+		for(Iterator i=s.iterator();i.hasNext();)
+		{
+			trainWord=(Word)trainWords.get(i.next());
+
+			bw.write(trainWord.name+" "+trainWord.numInHam+" "+trainWord.numInSpam);
+			bw.newLine();
+		}
+		
+		bw.flush();
+		bw.close();
+		}catch(IOException e){}
+	}
+	
+	
+	
+	
+	public static String bayesian(Hashtable trainWords,Hashtable testWords)
+	{
+		String finalClass="";    //final class of test file
+		double pHamFile=0,pSpamFile=0;//count the possibility of this file to be ham or spam
+		double pHamWords=0,pSpamWords=0;  //the sum numbers of all ham or spam words in testing file
+		Word testWord, trainWord;		
+		//count pHam and pSpam for each word in test file
+		Set s=testWords.keySet();
+		for(Iterator i=s.iterator();i.hasNext();)
+		{
+			testWord=(Word)testWords.get(i.next());
+			if(trainWords.containsKey(testWord.name))
+			{
+				trainWord=(Word)trainWords.get(testWord.name);
+				testWord.pHam=(double)(trainWord.numInHam+1)/(numHamWords+trainWords.size());
+				testWord.pSpam=(double)(trainWord.numInSpam+1)/(numSpamWords+trainWords.size());
+				
+				pHamWords+=Math.log10(testWord.pHam)*testWord.number;
+				pSpamWords+=Math.log10(testWord.pSpam)*testWord.number;
+			}
+		}
+		
+		pHamFile = Math.log10((double)numHamFile/(numHamFile+numSpamFile))+pHamWords;
+		pSpamFile = Math.log10((double)numSpamFile/(numHamFile+numSpamFile))+pSpamWords;
+
+		if(pHamFile>pSpamFile)
+			finalClass="ham";
+		if(pHamFile<pSpamFile)
+			finalClass="spam";
+		if(pHamFile==pSpamFile)
+			finalClass="unkown";
+		
+		
+		return finalClass;
+	}
+	
+	
+	
+	public static String read(String fileName) throws IOException
+	{
+		StringBuffer sb=new StringBuffer();
+		BufferedReader br=new BufferedReader(new FileReader(fileName));
+		String s;
+		while((s=br.readLine())!=null)
+		{
+			s=linePreProcess(s);
+			sb.append(s+"\n");
+		}
+		br.close();
+		return sb.toString().toLowerCase();
+	}
+	
+	public static String linePreProcess(String line)
+	{
+		//StringBuffer oneLine=new StringBuffer(line);
+//		if(line.toLowerCase().trim().startsWith("from"))
+//		{	
+//			return "";
+//		}
+//		if(line.toLowerCase().trim().startsWith("return-path"))
+//		{
+//			return "";
+//		}
+//		if(line.toLowerCase().trim().startsWith("delivered-to"))
+//		{
+//			return "";
+//		}
+//		if(line.toLowerCase().trim().startsWith("received:"))
+//		{
+//			return "";
+//		}
+//		if(line.toLowerCase().trim().startsWith("to:"))
+//		{
+//			return "";
+//		}
+//		if(line.toLowerCase().trim().startsWith("date:"))
+//		{
+//			return "";
+//		}
+		if(line.toLowerCase().trim().startsWith("<"))
+		{
+			return "";
+		}
+		
+		else
+			return line;
+	}
+	
+	public static boolean wordPreProcess(String word)
+	{
+		if(word.length()>20)
+			return true;
+		if(word.equalsIgnoreCase("and"))
+			return true;
+		if(word.equalsIgnoreCase("the"))
+			return true;
+
+		else
+			return false;
+	}
+	
+	public static Hashtable extractWordFromDir (String path) throws IOException
+	{
+		//read the training files
+		File d=new File(path);
+		File list[]=d.listFiles();
+		String fileName,sText,wordName,wordType="";
+		Hashtable words=new Hashtable();
+		Word word;
+		StringReader sr;
+		StringBuffer tempWord;
+				
+		for(int i=0;i<list.length;i++)
+		{
+			if(list[i].isFile())
+			{
+				fileName=list[i].getName();
+				//judge the train file, spam or ham
+				if(fileName.startsWith("ham"))
+				{
+					numHamFile++;
+					wordType="ham";
+				}
+				if(fileName.startsWith("spam"))
+				{
+					numSpamFile++;
+					wordType="spam";
+				}
+				fileName=path+"/"+fileName;
+				sText=read(fileName);       //read a file once
+				
+				//store each word in this file
+				sr=new StringReader(sText);
+				int c;
+				c=sr.read();
+			
+				while(c!=-1)
+				{
+					if(((c>=97)&&(c<=122))||((c>=65)&&(c<=90)))
+					{
+						//pick one word
+						tempWord=new StringBuffer();
+						while(((c>=97)&&(c<=122))||((c>=65)&&(c<=90)))
+						{
+							tempWord.append((char)c);
+							c=sr.read();
+						}
+						
+						c=sr.read();
+						
+						wordName=tempWord.toString();
+						
+						if(wordPreProcess(wordName))
+							continue;
+						
+						if(wordType.equals("ham"))
+						{
+							numHamWords++;						
+						}
+						if(wordType.equals("spam"))
+						{
+							numSpamWords++;
+						}
+							
+						//add this word to class word
+						word=new Word();
+						word.setName(wordName);
+						
+						//judge whether this word has existed in the hash table
+						if(words.containsKey(word.name))
+						{
+							word=(Word)words.get(word.name);
+							word.number++;
+							if(wordType.equals("ham"))
+								word.numInHam++;
+							else
+								word.numInSpam++;
+						}
+						else
+						{
+							words.put(word.name, word);
+							if(wordType.equals("ham"))
+								word.numInHam++;
+							else
+								word.numInSpam++;
+						}
+						
+					}
+					else
+						c=sr.read();
+				}
+			}
+		}
+		return words;
+	}
+	
+	public static Hashtable extractWordFromGeneratedFile(String fileName) throws IOException
+	{
+		String oneLine;
+		String s[];
+		Word trainWord;
+		Hashtable trainWords=new Hashtable();
+		BufferedReader br=new BufferedReader(new FileReader(fileName));
+		while((oneLine=br.readLine())!=null)
+		{
+			s=oneLine.split(" ");
+			trainWord = new Word();
+			trainWord.name=s[0];
+			trainWord.numInHam=Integer.parseInt(s[1]);
+			trainWord.numInSpam=Integer.parseInt(s[2]);
+			trainWords.put(trainWord.name, trainWord);
+		}
+		
+		
+		return trainWords;
+	}
+	
+	public static Hashtable extractWordFromFile (String fileName) throws IOException
+	{
+		//read the file
+		
+		
+		String sText,wordName;
+		Hashtable words=new Hashtable();
+		Word word;
+		StringReader sr;
+		StringBuffer tempWord;
+		
+				
+		sText=read(fileName);
+		
+		//store each word in this file
+		sr=new StringReader(sText);
+		int c;
+		c=sr.read();
+	
+		while(c!=-1)
+		{
+			if(((c>=97)&&(c<=122))||((c>=65)&&(c<=90)))
+			{
+				//pick one word
+				tempWord=new StringBuffer();
+				while(((c>=97)&&(c<=122))||((c>=65)&&(c<=90)))
+				{
+					tempWord.append((char)c);
+					c=sr.read();
+				}
+				
+				c=sr.read();
+				wordName=tempWord.toString();
+						
+				if(wordPreProcess(wordName))
+					continue;			
+				//add this word to class word
+				word=new Word();
+				word.setName(wordName);
+				
+				//judge whether this word has existed in the hash table
+				if(words.containsKey(wordName))
+				{
+					word=(Word)words.get(wordName);
+					word.number++;
+				}
+				else
+				{
+					words.put(wordName, word);
+				}			
+			}
+			else
+				c=sr.read();
+		}	
+		return words;
+	}
+}
